@@ -1,6 +1,5 @@
 import express from "express";
 import cors from "cors";
-import morgan from "morgan";
 import prisma from "./config/db.js";
 import requestLogger from "./middlewares/logger.middleware.js";
 import {
