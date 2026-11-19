@@ -1,11 +1,12 @@
 import express from "express";
 import cors from "cors";
 import prisma from "./config/db.js";
-import requestLogger from "./middlewares/logger.middleware.js";
+import authRoutes from "./routes/authRoutes.js";
+import requestLogger from "./middlewares/loggerMiddleware.js";
 import {
   notFoundHandler,
   errorHandler,
-} from "./middlewares/error.middleware.js";
+} from "./middlewares/errorMiddleware.js";
 
 const app = express();
 
@@ -13,21 +14,23 @@ app.use(cors());
 app.use(express.json());
 app.use(requestLogger);
 
+app.use("/api/auth", authRoutes);
+
 app.get("/api/health", async (req, res) => {
   try {
     const userCount = await prisma.user.count();
 
     res.status(200).json({
-      status: "succsess",
-      message: "Đã kết nối",
+      status: "success",
+      message: "Đã kết nối CSDL Neon!",
       data: { totalUsers: userCount },
       timestamp: new Date().toISOString(),
     });
   } catch (err) {
     res.status(500).json({
       status: "error",
-      message: "không thể kết đến CSDL",
-      error: error.message,
+      message: "Không thể kết nối đến CSDL",
+      error: err.message,
     });
   }
 });
