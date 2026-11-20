@@ -14,10 +14,10 @@ async function runTest() {
   console.log("==================================================");
 
   const model = process.env.OPENAI_MODEL || "openai/gpt-oss-120b";
-  console.log(`📌 Model đang chạy: ${model}`);
+  console.log(`[MODEL] Model dang chay: ${model}`);
 
-  const prompt = "Phân bổ ngân sách cưới 200 triệu đồng hợp lý nhất.";
-  console.log(`\n💬 Đang gửi câu hỏi test: "${prompt}"...\n`);
+  const prompt = "Phan bo ngan sach cuoi 200 trieu dong hop ly nhat.";
+  console.log(`\n[REQUEST] Dang gui cau hoi: "${prompt}"...\n`);
 
   try {
     const result = await aiService.generateChatResponse({
@@ -27,16 +27,16 @@ async function runTest() {
     });
 
     console.log("--------------------------------------------------");
-    console.log("✅ PHẢN HỒI TỪ TRỢ LÝ ÉN HỶ:");
+    console.log("[RESPONSE] PHAN HOI TU TRO LY EN HY:");
     console.log("--------------------------------------------------");
     console.log(result.reply);
     console.log("\n--------------------------------------------------");
     console.log(
-      `📊 Thống kê: Model = ${result.model} | Input tokens = ${result.usage.inputTokens} | Output tokens = ${result.usage.outputTokens}`
+      `[STATS] Model = ${result.model} | Input tokens = ${result.usage.inputTokens} | Output tokens = ${result.usage.outputTokens}`
     );
     console.log("--------------------------------------------------");
   } catch (err) {
-    console.error("❌ Lỗi khi gọi AI API:", err.message);
+    console.error("[ERROR] Loi khi goi AI API:", err.message);
   }
 }
 

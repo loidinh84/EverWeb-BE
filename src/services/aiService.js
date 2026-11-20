@@ -146,7 +146,7 @@ class AIService {
       text.includes("6 tháng") ||
       text.includes("tiến độ")
     ) {
-      reply = `### 📋 Lộ trình Checklist Chuẩn Bị Cưới 6 Tháng
+      reply = `### Lộ trình Checklist Chuẩn Bị Cưới 6 Tháng
 
 Én Hỷ xin gửi hai bạn kế hoạch mẫu tối ưu nhất:
 
@@ -168,14 +168,14 @@ class AIService {
 - [ ] Họp kịch bản ngày cưới với MC và ban điều phối
 - [ ] Nghỉ ngơi, chăm sóc sức khỏe và tinh thần thoải mái.
 
-💡 *Hai bạn có muốn Én Hỷ tư vấn sâu hơn về việc chọn thực đơn hay dự trù số bàn tiệc không?*`;
+> *Hai bạn có muốn Én Hỷ tư vấn sâu hơn về việc chọn thực đơn hay dự trù số bàn tiệc không?*`;
     } else if (
       text.includes("ngân sách") ||
       text.includes("tiền") ||
       text.includes("200") ||
       text.includes("chi phí")
     ) {
-      reply = `### 💰 Bảng Phân Bổ Ngân Sách Cưới 200 Triệu Đồng Hợp Lý
+      reply = `### Bảng Phân Bổ Ngân Sách Cưới 200 Triệu Đồng Hợp Lý
 
 | Hạng mục | Tỷ lệ (%) | Chi phí dự kiến | Gợi ý thực tế |
 | :--- | :--- | :--- | :--- |
@@ -187,16 +187,16 @@ class AIService {
 | **Thiệp cưới & Quà tặng** | 3% | 6 triệu VNĐ | Thiệp in + Website thiệp số EverWeb |
 | **Quỹ dự phòng phát sinh** | 7% | 14 triệu VNĐ | Bắt buộc dự trù cho các chi phí phát sinh |
 
-💡 *Bí quyết từ Én Hỷ: Hai bạn có thể tiết kiệm 10-15 triệu nếu tận dụng thiệp cưới online EverWeb và chọn hoa trang trí theo mùa đấy!*`;
+> *Gợi ý: Hai bạn có thể tiết kiệm 10-15 triệu nếu tận dụng thiệp cưới online EverWeb và chọn hoa trang trí theo mùa đấy!*`;
     } else {
-      reply = `Chào hai bạn! Én Hỷ đã nhận được câu hỏi: "${lastUserMessage}".
+      reply = `Chào hai bạn, Én Hỷ đã nhận được câu hỏi: "${lastUserMessage}".
 
 Để ngày trọng đại của hai bạn diễn ra trọn vẹn và hoàn hảo nhất, Én Hỷ luôn sẵn sàng đồng hành tư vấn:
 1. **Lên kế hoạch & Timeline:** Chia nhỏ các đầu việc theo tuần/tháng.
 2. **Cân đối tài chính:** Tối ưu ngân sách, kiểm soát chi tiêu không bị vượt hạn mức.
 3. **Ý tưởng & Kịch bản:** Từ phong cách tiệc, thiệp cưới số EverWeb cho đến kịch bản MC xúc động.
 
-Hai bạn hãy chia sẻ thêm cho Én Hỷ về ngày cưới dự kiến hoặc số lượng khách mời để mình tư vấn sát nhất nhé! 🕊️`;
+Hai bạn hãy chia sẻ thêm cho Én Hỷ về ngày cưới dự kiến hoặc số lượng khách mời để mình tư vấn sát nhất nhé!`;
     }
 
     return reply;
