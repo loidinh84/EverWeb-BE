@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import prisma from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 import requestLogger from "./middlewares/loggerMiddleware.js";
 import {
   notFoundHandler,
@@ -15,6 +16,7 @@ app.use(express.json());
 app.use(requestLogger);
 
 app.use("/api/auth", authRoutes);
+app.use("/api/ai", aiRoutes);
 
 app.get("/api/health", async (req, res) => {
   try {
