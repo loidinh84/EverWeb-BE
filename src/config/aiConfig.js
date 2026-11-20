@@ -22,7 +22,7 @@ const aiConfig = {
   // Cấu hình tham số sinh văn bản mặc định
   defaults: {
     temperature: 0.7,
-    maxTokens: 2048,
+    maxTokens: 1024, // Tối ưu để không vượt quá giới hạn 8,000 TPM của Groq on-demand tier
     topP: 0.95,
   },
 };

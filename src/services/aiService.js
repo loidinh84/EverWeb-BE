@@ -1,12 +1,44 @@
 import aiConfig from "../config/aiConfig.js";
 import AppError from "../utils/AppError.js";
-import { WEDDING_PLANNER_SYSTEM_PROMPT } from "../prompts/weddingPlannerPrompt.js";
+import {
+  WEDDING_PLANNER_SYSTEM_PROMPT,
+  COMPACT_WEDDING_PLANNER_SYSTEM_PROMPT,
+} from "../prompts/weddingPlannerPrompt.js";
 
 /**
  * Service kết nối và xử lý yêu cầu AI với OpenAI / Groq API.
  * Sử dụng native fetch tiêu chuẩn (Node.js 18+), không phụ thuộc thêm thư viện ngoài.
  */
 class AIService {
+  /**
+   * Cắt tỉa lịch sử hội thoại (Sliding Window & Token Optimization).
+   * Giữ lại tối đa `maxRecent` tin nhắn gần nhất và giới hạn ký tự từng tin nhắn
+   * để không vượt quá giới hạn 8,000 TPM của Groq/OpenAI on-demand tier.
+   * @private
+   */
+  _pruneMessages(messages = [], maxRecent = 6) {
+    if (!Array.isArray(messages) || messages.length === 0) return [];
+
+    // Chỉ lấy maxRecent tin nhắn gần nhất
+    const recent = messages.slice(-maxRecent);
+
+    return recent.map((msg, index) => {
+      const isLatest = index === recent.length - 1;
+      let content = (msg.content || "").trim();
+      // Câu hỏi mới nhất cho phép tối đa 3,000 ký tự, các câu trước đó tối đa 1,200 ký tự
+      const maxChar = isLatest ? 3000 : 1200;
+      if (content.length > maxChar) {
+        content =
+          content.slice(0, maxChar) +
+          "\n...[Nội dung đã được rút gọn để tối ưu token]...";
+      }
+      return {
+        role: msg.role === "assistant" ? "assistant" : "user",
+        content,
+      };
+    });
+  }
+
   /**
    * Gọi OpenAI / Groq API (Chat Completions)
    * @private
@@ -17,6 +49,7 @@ class AIService {
     model = aiConfig.openai.defaultModel,
     temperature = aiConfig.defaults.temperature,
     maxTokens = aiConfig.defaults.maxTokens,
+    isRetry = false,
   }) {
     const apiKey = aiConfig.openai.apiKey;
     if (!apiKey) {
@@ -31,13 +64,13 @@ class AIService {
 
     const endpoint = `${aiConfig.openai.baseUrl}/chat/completions`;
 
+    // Cắt tỉa lịch sử tin nhắn (Sliding Window) để tiết kiệm token
+    const prunedMessages = this._pruneMessages(messages, isRetry ? 1 : 6);
+
     // Định dạng messages theo chuẩn OpenAI
     const formattedMessages = [
       { role: "system", content: systemPrompt },
-      ...messages.map((msg) => ({
-        role: msg.role === "assistant" ? "assistant" : "user",
-        content: msg.content,
-      })),
+      ...prunedMessages,
     ];
 
     const requestBody = {
@@ -67,6 +100,25 @@ class AIService {
       const errMsg =
         data.error?.message ||
         `Lỗi AI API (Status ${response.status}): ${JSON.stringify(data)}`;
+
+      // Kiểm tra xem có phải lỗi vượt hạn mức Token Per Minute (TPM) hay Rate Limit không
+      const isTokenLimitError =
+        response.status === 413 ||
+        response.status === 429 ||
+        errMsg.toLowerCase().includes("tokens per minute") ||
+        errMsg.toLowerCase().includes("request too large") ||
+        errMsg.toLowerCase().includes("rate_limit_exceeded");
+
+      if (isTokenLimitError && !isRetry) {
+        console.warn(
+          `[AIService] Chạm giới hạn TPM (${errMsg}). Tự động kích hoạt cơ chế Auto-Recovery...`
+        );
+        return this._callOpenAIWithRecovery({
+          messages,
+          model,
+        });
+      }
+
       throw new AppError(errMsg, response.status >= 500 ? 502 : 400);
     }
 
@@ -83,6 +135,58 @@ class AIService {
       model,
       usage,
     };
+  }
+
+  /**
+   * Tự động phục hồi khi gặp lỗi TPM Limit:
+   * 1. Chỉ lấy câu hỏi gần nhất của người dùng
+   * 2. Dùng System Prompt rút gọn (COMPACT_WEDDING_PLANNER_SYSTEM_PROMPT)
+   * 3. Giảm maxTokens xuống 600 để đảm bảo lọt vào giới hạn TPM
+   * 4. Nếu vẫn thất bại, trả về câu trả lời thân thiện của Én Hỷ thay vì văng lỗi kỹ thuật
+   * @private
+   */
+  async _callOpenAIWithRecovery({
+    messages = [],
+    model = aiConfig.openai.defaultModel,
+  }) {
+    try {
+      const lastUserMsg =
+        messages.filter((m) => m.role === "user").pop()?.content || "";
+
+      const recoveryResult = await this._callOpenAI({
+        messages: [{ role: "user", content: lastUserMsg }],
+        systemPrompt: COMPACT_WEDDING_PLANNER_SYSTEM_PROMPT,
+        model,
+        temperature: 0.6,
+        maxTokens: 600,
+        isRetry: true,
+      });
+
+      return {
+        ...recoveryResult,
+        recovered: true,
+      };
+    } catch (retryErr) {
+      console.warn(
+        "[AIService] Auto-Recovery cũng không thể kết nối hoặc vượt hạn ngạch:",
+        retryErr.message
+      );
+
+      // Phản hồi mềm mại từ Én Hỷ thay vì hiển thị thông báo lỗi kỹ thuật của nhà cung cấp AI
+      return {
+        reply: `Chào hai bạn, Én Hỷ rất tiếc là câu hỏi này chứa lượng thông tin khá lớn hoặc hệ thống vừa nhận nhiều yêu cầu trong thời gian ngắn (chạm giới hạn xử lý tạm thời của mô hình AI).
+
+### Gợi ý xử lý nhanh cho hai bạn:
+- [ ] Bấm nút **"Làm mới trò chuyện"** để làm sạch bộ nhớ ngữ cảnh.
+- [ ] Tách câu hỏi thành các ý nhỏ hơn (ví dụ: hỏi riêng về *ngân sách tiệc cưới*, sau đó hỏi về *lịch trình 6 tháng*).
+- [ ] Chờ khoảng 10 - 20 giây rồi gửi lại câu hỏi.
+
+Én Hỷ luôn sẵn sàng đồng hành cùng hai bạn ngay khi sẵn sàng!`,
+        provider: "fallback-graceful",
+        model: model || "en-hy-assistant",
+        usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+      };
+    }
   }
 
   /**
