@@ -8,12 +8,13 @@ import {
   notFoundHandler,
   errorHandler,
 } from "./middlewares/errorMiddleware.js";
+import morgan from "morgan";
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(requestLogger);
+app.use(morgan("dev"));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/ai", aiRoutes);
@@ -35,9 +36,12 @@ app.get("/api/health", async (req, res) => {
       error: err.message,
     });
   }
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    status: "success",
+    message: "Planner API is running",
+    timestamp: new Date().toISOString(),
+  });
 });
-
-app.use(notFoundHandler);
-app.use(errorHandler);
 
 export default app;
