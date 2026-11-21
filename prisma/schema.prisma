@@ -1,0 +1,472 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email           String            @unique @db.VarChar(255)
+  password_hash   String            @db.VarChar(255)
+  full_name       String            @db.VarChar(255)
+  role            String            @default("couple") @db.VarChar(20)
+  is_active       Boolean           @default(true)
+  created_at      DateTime          @default(now()) @db.Timestamp(6)
+  audit_logs      audit_logs[]
+  chat_sessions   chat_sessions[]
+  chatbot_prompts chatbot_prompts[]
+  notifications   notifications[]
+  system_settings system_settings[]
+  tasks           tasks[]
+  wedding_members wedding_members[]
+  weddings        weddings[]
+
+  @@map("users")
+}
+
+model albums {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  wedding_id String   @db.Uuid
+  title      String   @db.VarChar(255)
+  weddings   weddings @relation(fields: [wedding_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  photos     photos[]
+
+  @@index([wedding_id], map: "idx_albums_wedding")
+}
+
+model audit_logs {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actor_id    String?  @db.Uuid
+  action      String   @db.VarChar(50)
+  entity_type String   @db.VarChar(50)
+  entity_id   String?  @db.Uuid
+  old_value   Json?
+  new_value   Json?
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  users       User?    @relation(fields: [actor_id], references: [id], onUpdate: NoAction)
+
+  @@index([actor_id], map: "idx_audit_logs_actor")
+  @@index([created_at], map: "idx_audit_logs_created")
+  @@index([entity_type, entity_id], map: "idx_audit_logs_entity")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model budget_categories {
+  id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  wedding_id     String     @db.Uuid
+  name           String     @db.VarChar(100)
+  planned_amount Decimal    @default(0) @db.Decimal(15, 0)
+  weddings       weddings   @relation(fields: [wedding_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  expenses       expenses[]
+
+  @@unique([wedding_id, name])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model budget_category_templates {
+  id                String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String  @unique @db.VarChar(100)
+  suggested_percent Decimal @db.Decimal(5, 2)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model chat_messages {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  session_id    String        @db.Uuid
+  role          String        @db.VarChar(10)
+  content       String
+  created_at    DateTime      @default(now()) @db.Timestamp(6)
+  chat_sessions chat_sessions @relation(fields: [session_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([session_id, created_at], map: "idx_chat_messages_session")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model chat_sessions {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  wedding_id     String           @db.Uuid
+  user_id        String?          @db.Uuid
+  guest_id       String?          @db.Uuid
+  mode           String           @db.VarChar(10)
+  created_at     DateTime         @default(now()) @db.Timestamp(6)
+  chat_messages  chat_messages[]
+  guests         guests?          @relation(fields: [guest_id], references: [id], onUpdate: NoAction)
+  users          User?            @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+  weddings       weddings         @relation(fields: [wedding_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  chat_tool_logs chat_tool_logs[]
+  llm_usage_logs llm_usage_logs[]
+
+  @@index([guest_id], map: "idx_chat_sessions_guest")
+  @@index([user_id], map: "idx_chat_sessions_user")
+  @@index([wedding_id], map: "idx_chat_sessions_wedding")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model chat_tool_logs {
+  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  session_id        String        @db.Uuid
+  tool_name         String        @db.VarChar(100)
+  input             Json?
+  output            Json?
+  status            String        @default("success") @db.VarChar(10)
+  confirmed_by_user Boolean       @default(false)
+  created_at        DateTime      @default(now()) @db.Timestamp(6)
+  chat_sessions     chat_sessions @relation(fields: [session_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([session_id], map: "idx_chat_tool_logs_session")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model chatbot_prompts {
+  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_by String  @db.Uuid
+  mode       String  @db.VarChar(10)
+  content    String
+  version    Int     @default(1)
+  is_active  Boolean @default(false)
+  users      User    @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+
+  @@unique([mode, version])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model expenses {
+  id                String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  wedding_id        String            @db.Uuid
+  category_id       String            @db.Uuid
+  vendor_id         String?           @db.Uuid
+  title             String            @db.VarChar(255)
+  estimated_amount  Decimal           @default(0) @db.Decimal(15, 0)
+  actual_amount     Decimal           @default(0) @db.Decimal(15, 0)
+  paid_amount       Decimal           @default(0) @db.Decimal(15, 0)
+  due_date          DateTime?         @db.Date
+  payment_status    String            @default("unpaid") @db.VarChar(20)
+  budget_categories budget_categories @relation(fields: [category_id], references: [id], onUpdate: NoAction)
+  vendors           vendors?          @relation(fields: [vendor_id], references: [id], onUpdate: NoAction)
+  weddings          weddings          @relation(fields: [wedding_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([category_id], map: "idx_expenses_category")
+  @@index([vendor_id], map: "idx_expenses_vendor")
+  @@index([wedding_id], map: "idx_expenses_wedding")
+}
+
+model gift_accounts {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  wedding_id     String   @db.Uuid
+  bank_code      String   @db.VarChar(20)
+  account_number String   @db.VarChar(30)
+  account_name   String   @db.VarChar(255)
+  qr_image       String?  @db.VarChar(255)
+  is_enabled     Boolean  @default(false)
+  weddings       weddings @relation(fields: [wedding_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([wedding_id], map: "idx_gift_accounts_wedding")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model gifts {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  wedding_id String   @db.Uuid
+  guest_id   String?  @db.Uuid
+  giver_name String   @db.VarChar(255)
+  amount     Decimal  @db.Decimal(15, 0)
+  message    String?
+  status     String   @default("pending") @db.VarChar(10)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  guests     guests?  @relation(fields: [guest_id], references: [id], onUpdate: NoAction)
+  weddings   weddings @relation(fields: [wedding_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([guest_id], map: "idx_gifts_guest")
+  @@index([wedding_id], map: "idx_gifts_wedding")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model guest_groups {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  wedding_id String   @db.Uuid
+  name       String   @db.VarChar(100)
+  side       String   @default("both") @db.VarChar(10)
+  weddings   weddings @relation(fields: [wedding_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  guests     guests[]
+
+  @@index([wedding_id], map: "idx_guest_groups_wedding")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model guests {
+  id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  wedding_id       String            @db.Uuid
+  group_id         String?           @db.Uuid
+  full_name        String            @db.VarChar(255)
+  phone            String?           @db.VarChar(20)
+  email            String?           @db.VarChar(255)
+  max_companions   Int               @default(0)
+  invite_token     String            @unique @db.VarChar(64)
+  rsvp_status      String            @default("pending") @db.VarChar(10)
+  attending_count  Int               @default(0)
+  dietary_note     String?           @db.VarChar(255)
+  wish_message     String?
+  responded_at     DateTime?         @db.Timestamp(6)
+  chat_sessions    chat_sessions[]
+  gifts            gifts[]
+  guest_groups     guest_groups?     @relation(fields: [group_id], references: [id], onUpdate: NoAction)
+  weddings         weddings          @relation(fields: [wedding_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  photos           photos[]
+  rsvp_responses   rsvp_responses[]
+  seat_assignments seat_assignments?
+
+  @@index([group_id], map: "idx_guests_group")
+  @@index([wedding_id, rsvp_status], map: "idx_guests_rsvp")
+  @@index([wedding_id], map: "idx_guests_wedding")
+}
+
+model invitation_templates {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String        @db.VarChar(255)
+  preview_url   String?       @db.VarChar(255)
+  layout_config Json          @default("{}")
+  is_active     Boolean       @default(true)
+  invitations   invitations[]
+}
+
+model invitations {
+  id                   String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  wedding_id           String               @unique @db.Uuid
+  template_id          String               @db.Uuid
+  content              Json                 @default("{}")
+  cover_image          String?              @db.VarChar(255)
+  is_published         Boolean              @default(false)
+  invitation_templates invitation_templates @relation(fields: [template_id], references: [id], onUpdate: NoAction)
+  weddings             weddings             @relation(fields: [wedding_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([template_id], map: "idx_invitations_template")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model llm_usage_logs {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  session_id    String        @db.Uuid
+  model         String        @db.VarChar(100)
+  input_tokens  Int           @default(0)
+  output_tokens Int           @default(0)
+  cost          Decimal       @default(0) @db.Decimal(10, 4)
+  created_at    DateTime      @default(now()) @db.Timestamp(6)
+  chat_sessions chat_sessions @relation(fields: [session_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([created_at], map: "idx_llm_usage_logs_created")
+  @@index([session_id], map: "idx_llm_usage_logs_session")
+}
+
+model notifications {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String   @db.Uuid
+  type       String   @db.VarChar(50)
+  content    String
+  is_read    Boolean  @default(false)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  users      User     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([user_id, is_read], map: "idx_notifications_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model photo_reports {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  photo_id      String   @db.Uuid
+  reporter_name String?  @db.VarChar(255)
+  reason        String   @db.VarChar(255)
+  status        String   @default("open") @db.VarChar(10)
+  created_at    DateTime @default(now()) @db.Timestamp(6)
+  photos        photos   @relation(fields: [photo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([photo_id], map: "idx_photo_reports_photo")
+}
+
+model photos {
+  id                   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  album_id             String          @db.Uuid
+  uploaded_by_guest_id String?         @db.Uuid
+  url                  String          @db.VarChar(255)
+  caption              String?         @db.VarChar(255)
+  is_approved          Boolean         @default(false)
+  created_at           DateTime        @default(now()) @db.Timestamp(6)
+  photo_reports        photo_reports[]
+  albums               albums          @relation(fields: [album_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  guests               guests?         @relation(fields: [uploaded_by_guest_id], references: [id], onUpdate: NoAction)
+
+  @@index([album_id, is_approved], map: "idx_photos_album")
+  @@index([uploaded_by_guest_id], map: "idx_photos_guest")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model rsvp_responses {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  guest_id        String   @db.Uuid
+  status          String   @db.VarChar(10)
+  attending_count Int      @default(0)
+  note            String?
+  responded_at    DateTime @default(now()) @db.Timestamp(6)
+  guests          guests   @relation(fields: [guest_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([guest_id], map: "idx_rsvp_responses_guest")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model seat_assignments {
+  id         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  table_id   String @db.Uuid
+  guest_id   String @unique @db.Uuid
+  seat_count Int    @default(1)
+  guests     guests @relation(fields: [guest_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tables     tables @relation(fields: [table_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([table_id], map: "idx_seat_assignments_table")
+}
+
+model service_categories {
+  id      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name    String    @unique @db.VarChar(100)
+  icon    String?   @db.VarChar(50)
+  vendors vendors[]
+}
+
+model system_settings {
+  key        String   @id @db.VarChar(100)
+  value      String   @db.VarChar(255)
+  updated_by String   @db.Uuid
+  updated_at DateTime @default(now()) @db.Timestamp(6)
+  users      User     @relation(fields: [updated_by], references: [id], onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model tables {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  wedding_id       String             @db.Uuid
+  name             String             @db.VarChar(50)
+  capacity         Int
+  shape            String             @default("round") @db.VarChar(20)
+  pos_x            Float              @default(0)
+  pos_y            Float              @default(0)
+  seat_assignments seat_assignments[]
+  weddings         weddings           @relation(fields: [wedding_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([wedding_id, name])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model task_template_items {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  template_id    String         @db.Uuid
+  title          String         @db.VarChar(255)
+  offset_days    Int
+  category       String?        @db.VarChar(50)
+  task_templates task_templates @relation(fields: [template_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([template_id], map: "idx_task_template_items_tpl")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model task_templates {
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                String                @db.VarChar(255)
+  milestone           String                @db.VarChar(20)
+  task_template_items task_template_items[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model tasks {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  wedding_id  String    @db.Uuid
+  assignee_id String?   @db.Uuid
+  vendor_id   String?   @db.Uuid
+  title       String    @db.VarChar(255)
+  description String?
+  due_date    DateTime? @db.Date
+  priority    String    @default("medium") @db.VarChar(10)
+  status      String    @default("todo") @db.VarChar(20)
+  category    String?   @db.VarChar(50)
+  users       User?     @relation(fields: [assignee_id], references: [id], onUpdate: NoAction)
+  vendors     vendors?  @relation(fields: [vendor_id], references: [id], onUpdate: NoAction)
+  weddings    weddings  @relation(fields: [wedding_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([assignee_id], map: "idx_tasks_assignee")
+  @@index([vendor_id], map: "idx_tasks_vendor")
+  @@index([wedding_id, status], map: "idx_tasks_wedding")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model vendors {
+  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  wedding_id          String              @db.Uuid
+  service_category_id String?             @db.Uuid
+  name                String              @db.VarChar(255)
+  phone               String?             @db.VarChar(20)
+  email               String?             @db.VarChar(255)
+  address             String?             @db.VarChar(255)
+  note                String?
+  status              String              @default("considering") @db.VarChar(20)
+  expenses            expenses[]
+  tasks               tasks[]
+  service_categories  service_categories? @relation(fields: [service_category_id], references: [id], onUpdate: NoAction)
+  weddings            weddings            @relation(fields: [wedding_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([service_category_id], map: "idx_vendors_category")
+  @@index([wedding_id], map: "idx_vendors_wedding")
+}
+
+model wedding_faqs {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  wedding_id String   @db.Uuid
+  question   String   @db.VarChar(255)
+  answer     String
+  weddings   weddings @relation(fields: [wedding_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([wedding_id], map: "idx_wedding_faqs_wedding")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model wedding_members {
+  wedding_id  String   @db.Uuid
+  user_id     String   @db.Uuid
+  member_role String   @default("editor") @db.VarChar(20)
+  users       User     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  weddings    weddings @relation(fields: [wedding_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([wedding_id, user_id])
+  @@index([user_id], map: "idx_wedding_members_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model weddings {
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  owner_id          String              @db.Uuid
+  title             String              @db.VarChar(255)
+  bride_name        String?             @db.VarChar(255)
+  groom_name        String?             @db.VarChar(255)
+  wedding_date      DateTime?           @db.Date
+  venue_name        String?             @db.VarChar(255)
+  venue_address     String?             @db.VarChar(255)
+  slug              String              @unique @db.VarChar(100)
+  total_budget      Decimal             @default(0) @db.Decimal(15, 0)
+  status            String              @default("draft") @db.VarChar(20)
+  albums            albums[]
+  budget_categories budget_categories[]
+  chat_sessions     chat_sessions[]
+  expenses          expenses[]
+  gift_accounts     gift_accounts[]
+  gifts             gifts[]
+  guest_groups      guest_groups[]
+  guests            guests[]
+  invitations       invitations?
+  tables            tables[]
+  tasks             tasks[]
+  vendors           vendors[]
+  wedding_faqs      wedding_faqs[]
+  wedding_members   wedding_members[]
+  users             User                @relation(fields: [owner_id], references: [id], onUpdate: NoAction)
+
+  @@index([owner_id], map: "idx_weddings_owner")
+}
