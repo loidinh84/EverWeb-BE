@@ -4,6 +4,7 @@ import prisma from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import guestRoutes from "./routes/guestRoutes.js";
+import uploadRoutes from "./routes/upload.routes.js";
 import requestLogger from "./middlewares/loggerMiddleware.js";
 import {
   notFoundHandler,
@@ -38,6 +39,8 @@ app.get("/api/health", async (req, res) => {
     });
   }
 });
+
+app.use("/api/uploads", uploadRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
