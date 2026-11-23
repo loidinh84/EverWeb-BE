@@ -53,3 +53,37 @@ export const authorize = (...allowedRoles) => {
     next();
   };
 };
+
+/**
+ * Middleware xác thực tùy chọn (Optional Authentication).
+ * Nếu có token hợp lệ -> gán req.user.
+ * Nếu không có token hoặc token hết hạn -> vẫn cho đi tiếp (req.user = null).
+ */
+export const optionalAuthenticate = async (req, res, next) => {
+  try {
+    let token;
+    const authHeader = req.headers.authorization;
+
+    if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
+      token = authHeader.split(" ")[1];
+    }
+
+    if (token) {
+      try {
+        const decoded = verifyToken(token);
+        if (decoded?.id) {
+          const currentUser = await userRepository.findById(decoded.id);
+          if (currentUser && currentUser.is_active) {
+            req.user = currentUser;
+          }
+        }
+      } catch {
+        // Token không hợp lệ thì bỏ qua, không ném lỗi
+      }
+    }
+
+    next();
+  } catch {
+    next();
+  }
+};

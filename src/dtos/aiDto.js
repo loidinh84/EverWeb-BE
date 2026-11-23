@@ -22,10 +22,22 @@ export const chatRequestSchema = z.object({
 
 /** Schema xác thực request Chat theo phiên lưu trữ (Session-based) */
 export const sessionChatRequestSchema = z.object({
-  sessionId: z.string().uuid("sessionId phải là UUID hợp lệ").optional(),
-  weddingId: z.string().uuid("weddingId phải là UUID hợp lệ"),
+  sessionId: z.string().uuid("sessionId phải là UUID hợp lệ").optional().nullable().or(z.literal("")),
+  weddingId: z.string().optional().nullable().or(z.literal("")),
   message: z.string().trim().min(1, "Nội dung tin nhắn không được để trống"),
   provider: z.string().optional(),
   model: z.string().trim().optional(),
+});
+
+/** Schema tạo phiên trò chuyện mới */
+export const createSessionSchema = z.object({
+  weddingId: z.string().optional().nullable().or(z.literal("")),
+  title: z.string().trim().max(255).optional(),
+});
+
+/** Schema truy vấn danh sách phiên trò chuyện */
+export const sessionQuerySchema = z.object({
+  weddingId: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 
