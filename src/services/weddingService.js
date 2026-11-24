@@ -1,4 +1,4 @@
-import prisma from "../config/db.js";
+﻿import prisma from "../config/db.js";
 import weddingRepository from "../repositories/weddingRepository.js";
 import AppError from "../utils/AppError.js";
 
@@ -172,7 +172,7 @@ const weddingService = {
 
     if (!targetUser) {
       throw new AppError(
-        "Không tìm thấy tài khoản với email này. Người được mời cần đăng ký EverWed trước.",
+        "Không tìm thấy tài khoản với email này. Người được mời cần đăng ký EverWeb trước.",
         404
       );
     }

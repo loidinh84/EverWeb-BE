@@ -1,4 +1,4 @@
-import prisma from "../config/db.js";
+﻿import prisma from "../config/db.js";
 import weddingRepository from "../repositories/weddingRepository.js";
 import AppError from "../utils/AppError.js";
 
@@ -137,7 +137,7 @@ export const DEFAULT_FEATURE_DATA = {
   },
   travel_config: {
     guestNote:
-      "Tụi mình đã giữ giá ưu đãi cho khách tham dự lễ cưới tại các khách sạn gần sảnh tiệc. Nhớ đọc mã EVERWED khi đặt phòng nhé!",
+      "Tụi mình đã giữ giá ưu đãi cho khách tham dự lễ cưới tại các khách sạn gần sảnh tiệc. Nhớ đọc mã EVERWEB khi đặt phòng nhé!",
     hotels: [
       {
         id: "h1",
@@ -145,7 +145,7 @@ export const DEFAULT_FEATURE_DATA = {
         distance: "Cách sảnh 0.8 km",
         rating: "9.4",
         price: "2.800.000 đ / đêm",
-        code: "EVERWED20",
+        code: "EVERWEB20",
       },
       {
         id: "h2",
