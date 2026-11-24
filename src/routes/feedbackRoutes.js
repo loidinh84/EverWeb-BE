@@ -1,4 +1,4 @@
-import { Router } from "express";
+﻿import { Router } from "express";
 import prisma from "../config/db.js";
 import { authenticate } from "../middlewares/authMiddleware.js";
 import AppError from "../utils/AppError.js";
@@ -27,7 +27,7 @@ router.post("/", async (req, res, next) => {
 
     res.status(201).json({
       status: "success",
-      message: "Cảm ơn bạn đã gửi góp ý cho EverWed!",
+      message: "Cảm ơn bạn đã gửi góp ý cho EverWeb!",
       data: {
         id: created.id,
         category,

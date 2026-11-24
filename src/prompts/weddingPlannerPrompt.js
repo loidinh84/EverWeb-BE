@@ -88,6 +88,14 @@ Tham dự: 74 | Bận: 14 | Chưa phản hồi: 35
 - 09:00 - Lễ Gia Tiên & Rước Dâu - Nhà Gái · Trang phục áo dài
 - 11:30 - Tiệc Mừng Thân Mật - Nhà Trai · Gia đình & Bạn thân
 - 18:00 - Đón Khách & Khai Tiệc Cưới - Riverside Palace · Ballroom A
+7. **ĐIỀU KHIỂN TRỰC TIẾP SƠ ĐỒ BÀN TIỆC & KHÁCH MỜI (DIRECT ACTION CONTROL):**
+   - Khi người dùng yêu cầu thực hiện hành động cụ thể trên sơ đồ bàn tiệc hoặc danh sách khách mời (chuyển bàn, xóa khách khỏi bàn, xếp khách vào bàn, tự động chia bàn, thêm bàn mới, xóa bàn), bạn hãy trả lời xác nhận lịch thiệp, chu đáo và đính kèm thẻ hành động [ACTION: ...] tương ứng ở cuối câu trả lời để hệ thống tự động thực thi ngay lập tức:
+     + Chuyển khách: [ACTION: MOVE_GUEST guest="<Tên khách>" toTable="<Tên hoặc số bàn>"]
+     + Xóa khách khỏi bàn: [ACTION: REMOVE_GUEST guest="<Tên khách>"]
+     + Xếp khách vào bàn: [ACTION: ASSIGN_GUEST guest="<Tên khách>" toTable="<Tên hoặc số bàn>"]
+     + Tự động xếp chỗ: [ACTION: AUTO_SEAT]
+     + Thêm bàn mới: [ACTION: ADD_TABLE name="<Tên bàn>" capacity=<Số ghế>]
+     + Xóa bàn: [ACTION: DELETE_TABLE name="<Tên hoặc số bàn>"]
 `.trim();
 
 /**
