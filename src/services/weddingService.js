@@ -1,4 +1,4 @@
-﻿import prisma from "../config/db.js";
+import prisma from "../config/db.js";
 import weddingRepository from "../repositories/weddingRepository.js";
 import AppError from "../utils/AppError.js";
 
@@ -49,7 +49,12 @@ const normalizeWriteData = (payload = {}) => {
   }
   if (payload.status !== undefined) {
     const rawStatus = String(payload.status).trim().toLowerCase();
-    data.status = rawStatus === "planning" || !rawStatus ? "draft" : rawStatus;
+    data.status =
+      rawStatus === "planning" || !rawStatus
+        ? "draft"
+        : rawStatus === "published"
+        ? "active"
+        : rawStatus;
   }
   if (payload.slug !== undefined && payload.slug) {
     data.slug = buildSlug(payload.slug);

@@ -143,6 +143,53 @@ const weddingController = {
       next(err);
     }
   },
+
+  async sendEmail(req, res, next) {
+    try {
+      const result = await weddingFeatureService.sendWeddingEmail(
+        req.params.id,
+        req.body,
+        req.user
+      );
+      res.status(200).json({
+        status: "success",
+        message: `Đã gửi email thành công tới ${result.sentCount} địa chỉ`,
+        data: result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async getPublicContactForm(req, res, next) {
+    try {
+      const data = await weddingFeatureService.getPublicContactForm(
+        req.params.slug
+      );
+      res.status(200).json({
+        status: "success",
+        data,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async submitPublicContactForm(req, res, next) {
+    try {
+      const data = await weddingFeatureService.submitPublicContactForm(
+        req.params.slug,
+        req.body
+      );
+      res.status(201).json({
+        status: "success",
+        message: "Đã gửi thông tin liên hệ thành công!",
+        data,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
 };
 
 export default weddingController;
