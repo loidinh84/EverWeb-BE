@@ -4,6 +4,9 @@ import { authenticate } from "../middlewares/authMiddleware.js";
 
 const router = Router();
 
+router.get("/public/contact/:slug", weddingController.getPublicContactForm);
+router.post("/public/contact/:slug", weddingController.submitPublicContactForm);
+
 router.use(authenticate);
 
 router.get("/", weddingController.getWeddings);
@@ -20,5 +23,6 @@ router.delete("/:id/members/:userId", weddingController.removeMember);
 router.get("/:id/features", weddingController.getFeatures);
 router.patch("/:id/features/:section", weddingController.updateFeatureSection);
 router.put("/:id/features/:section", weddingController.updateFeatureSection);
+router.post("/:id/send-email", weddingController.sendEmail);
 
 export default router;
