@@ -190,6 +190,21 @@ const weddingController = {
       next(err);
     }
   },
+
+  async getPublicInvitation(req, res, next) {
+    try {
+      const data = await weddingFeatureService.getPublicInvitation({
+        weddingId: req.query.weddingId,
+        slug: req.query.slug,
+      });
+      res.status(200).json({
+        status: "success",
+        data,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
 };
 
 export default weddingController;

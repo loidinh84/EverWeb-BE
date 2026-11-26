@@ -522,6 +522,59 @@ const weddingFeatureService = {
 
     return { guest, submission };
   },
+
+  async getPublicInvitation({ weddingId, slug } = {}) {
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    let wedding = null;
+    if (weddingId && uuidRegex.test(String(weddingId))) {
+      wedding = await prisma.weddings.findUnique({
+        where: { id: String(weddingId) },
+      });
+    } else if (slug) {
+      wedding = await prisma.weddings.findUnique({
+        where: { slug: String(slug).trim().toLowerCase() },
+      });
+    }
+
+    if (!wedding) {
+      wedding = await prisma.weddings.findFirst({
+        orderBy: { wedding_date: "asc" },
+      });
+    }
+
+    if (!wedding) {
+      throw new AppError("Chưa có dữ liệu thiệp cưới nào.", 404);
+    }
+
+    const config = await prisma.wedding_feature_configs.findUnique({
+      where: { wedding_id: wedding.id },
+      select: {
+        stationery_config: true,
+        registry_config: true,
+      },
+    });
+
+    const stationery = config?.stationery_config || {};
+    const registry = config?.registry_config || {};
+
+    return {
+      wedding: {
+        id: wedding.id,
+        title: wedding.title,
+        bride_name: wedding.bride_name,
+        groom_name: wedding.groom_name,
+        wedding_date: wedding.wedding_date,
+        venue_name: wedding.venue_name,
+        venue_address: wedding.venue_address,
+        slug: wedding.slug,
+        status: wedding.status,
+      },
+      customCard: stationery?.customCard || null,
+      registryConfig: registry || null,
+    };
+  },
 };
 
 export default weddingFeatureService;

@@ -6,6 +6,7 @@ import aiRoutes from "./routes/aiRoutes.js";
 import guestRoutes from "./routes/guestRoutes.js";
 import weddingRoutes from "./routes/weddingRoutes.js";
 import feedbackRoutes from "./routes/feedbackRoutes.js";
+import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 import uploadRoutes from "./routes/upload.routes.js";
 import requestLogger from "./middlewares/loggerMiddleware.js";
 import {
@@ -24,6 +25,7 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/guests", guestRoutes);
 app.use("/api/weddings", weddingRoutes);
 app.use("/api/feedbacks", feedbackRoutes);
+app.use("/api/subscriptions", subscriptionRoutes);
 
 app.get("/api/health", async (req, res) => {
   try {

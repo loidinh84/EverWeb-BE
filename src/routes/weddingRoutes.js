@@ -4,6 +4,7 @@ import { authenticate } from "../middlewares/authMiddleware.js";
 
 const router = Router();
 
+router.get("/public/invitation", weddingController.getPublicInvitation);
 router.get("/public/contact/:slug", weddingController.getPublicContactForm);
 router.post("/public/contact/:slug", weddingController.submitPublicContactForm);
 
