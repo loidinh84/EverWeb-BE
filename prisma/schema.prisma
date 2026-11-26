@@ -23,6 +23,8 @@ model User {
   tasks           tasks[]
   wedding_members wedding_members[]
   weddings        weddings[]
+  subscriptions   subscriptions?
+  subscription_orders subscription_orders[]
 
   @@map("users")
 }
@@ -467,6 +469,8 @@ model weddings {
   wedding_faqs            wedding_faqs[]
   wedding_feature_configs wedding_feature_configs?
   wedding_members         wedding_members[]
+  subscriptions           subscriptions[]
+  subscription_orders     subscription_orders[]
   users                   User                     @relation(fields: [owner_id], references: [id], onUpdate: NoAction)
 
   @@index([owner_id], map: "idx_weddings_owner")
@@ -484,4 +488,43 @@ model wedding_feature_configs {
   registry_config   Json     @default("{}")
   updated_at        DateTime @default(now()) @updatedAt @db.Timestamp(6)
   weddings          weddings @relation(fields: [wedding_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model subscriptions {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String    @unique @db.Uuid
+  wedding_id String?   @db.Uuid
+  plan_id    String    @default("free") @db.VarChar(20)
+  cycle_id   String    @default("event") @db.VarChar(20)
+  status     String    @default("active") @db.VarChar(20)
+  started_at DateTime  @default(now()) @db.Timestamp(6)
+  expires_at DateTime? @db.Timestamp(6)
+  updated_at DateTime  @default(now()) @updatedAt @db.Timestamp(6)
+  users      User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  weddings   weddings? @relation(fields: [wedding_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([wedding_id], map: "idx_subscriptions_wedding")
+}
+
+model subscription_orders {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  order_code       String    @unique @db.VarChar(40)
+  user_id          String    @db.Uuid
+  wedding_id       String?   @db.Uuid
+  plan_id          String    @db.VarChar(20)
+  cycle_id         String    @db.VarChar(20)
+  promo_code       String?   @db.VarChar(30)
+  discount_percent Int       @default(0)
+  original_amount  Decimal   @db.Decimal(15, 0)
+  final_amount     Decimal   @db.Decimal(15, 0)
+  payment_method   String    @default("vietqr") @db.VarChar(30)
+  transfer_note    String    @db.VarChar(100)
+  status           String    @default("pending") @db.VarChar(20)
+  paid_at          DateTime? @db.Timestamp(6)
+  created_at       DateTime  @default(now()) @db.Timestamp(6)
+  users            User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  weddings         weddings? @relation(fields: [wedding_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([user_id], map: "idx_subscription_orders_user")
+  @@index([status], map: "idx_subscription_orders_status")
 }
