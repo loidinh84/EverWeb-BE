@@ -7,6 +7,7 @@ import guestRoutes from "./routes/guestRoutes.js";
 import weddingRoutes from "./routes/weddingRoutes.js";
 import feedbackRoutes from "./routes/feedbackRoutes.js";
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
+import giftRoutes from "./routes/giftRoutes.js";
 import uploadRoutes from "./routes/upload.routes.js";
 import requestLogger from "./middlewares/loggerMiddleware.js";
 import {
@@ -26,6 +27,7 @@ app.use("/api/guests", guestRoutes);
 app.use("/api/weddings", weddingRoutes);
 app.use("/api/feedbacks", feedbackRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
+app.use("/api/gifts", giftRoutes);
 
 app.get("/api/health", async (req, res) => {
   try {

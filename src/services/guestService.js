@@ -96,7 +96,12 @@ const guestService = {
 
     await assertWeddingAccess(guest.wedding_id, user);
 
-    return guestRepository.update(id, updateData);
+    const normalizedUpdate = { ...updateData };
+    if (normalizedUpdate.rsvp_status === "attending") {
+      normalizedUpdate.rsvp_status = "accepted";
+    }
+
+    return guestRepository.update(id, normalizedUpdate);
   },
 
   async deleteGuest(id, user) {

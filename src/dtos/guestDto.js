@@ -75,7 +75,7 @@ export const updateGuestSchema = z
       .max(10, "Số người đi cùng tối đa 10 người")
       .optional(),
     rsvp_status: z
-      .enum(["pending", "attending", "declined"], {
+      .enum(["pending", "accepted", "attending", "declined"], {
         errorMap: () => ({
           message: "Trạng thái tham dự không hợp lệ!",
         }),
@@ -96,7 +96,7 @@ export const updateGuestSchema = z
 export const filterGuestQuerySchema = z.object({
   wedding_id: z.string().uuid("Thông tin đám cưới không hợp lệ!"),
   group_id: optionalUuidField("Nhóm khách mời không hợp lệ!"),
-  rsvp_status: z.enum(["pending", "attending", "declined"]).optional(),
+  rsvp_status: z.enum(["pending", "accepted", "attending", "declined"]).optional(),
   search: z.string().trim().optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
