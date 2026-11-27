@@ -1,5 +1,9 @@
 import AppError from "../utils/AppError.js";
-import { deleteImage, uploadImageBuffer } from "../services/upload.service.js";
+import {
+  deleteImage,
+  listImagesByFolder,
+  uploadImageBuffer,
+} from "../services/upload.service.js";
 
 export const uploadSingleImage = async (req, res) => {
   if (!req.file) {
@@ -24,5 +28,15 @@ export const removeImage = async (req, res) => {
     status: "success",
     message: "Đã xoá ảnh trên Cloudinary",
     data: result,
+  });
+};
+
+export const getCloudinaryImages = async (req, res) => {
+  const folder = req.query?.folder?.trim() || "everweb/images";
+  const images = await listImagesByFolder(folder);
+
+  res.status(200).json({
+    status: "success",
+    data: images,
   });
 };

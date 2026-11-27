@@ -53,3 +53,23 @@ export const deleteImage = async (publicId) => {
   }
   return cloudinary.uploader.destroy(publicId, { resource_type: "image" });
 };
+
+/**
+ * Lấy danh sách ảnh từ một thư mục trên Cloudinary (mặc định: everweb/images).
+ */
+export const listImagesByFolder = async (folder = "everweb/images") => {
+  ensureConfigured();
+  const res = await cloudinary.api.resources_by_asset_folder(folder, {
+    max_results: 100,
+  });
+
+  return (res.resources || [])
+    .sort((a, b) => a.public_id.localeCompare(b.public_id))
+    .map((item) => ({
+      publicId: item.public_id,
+      url: item.secure_url,
+      width: item.width,
+      height: item.height,
+      format: item.format,
+    }));
+};
