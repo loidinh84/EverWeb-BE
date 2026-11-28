@@ -8,8 +8,9 @@ import {
 import { sendWeddingEmail as sendWeddingEmailInternal } from "./emailService.js";
 import {
   getPublicContactForm,
+  getPublicInvitation,
   submitPublicContactForm,
-} from "./publicContactService.js";
+} from "./publicWeddingService.js";
 
 export { FEATURE_SECTIONS, DEFAULT_FEATURE_DATA };
 
@@ -117,6 +118,7 @@ const weddingFeatureService = {
   },
 
   getPublicContactForm,
+  getPublicInvitation,
   submitPublicContactForm,
 };
 

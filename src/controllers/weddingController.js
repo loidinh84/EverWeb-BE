@@ -1,5 +1,9 @@
 import weddingService from "../services/weddingService.js";
 import weddingFeatureService from "../services/weddingFeatureService.js";
+import {
+  getPublicWeddingSite as getPublicWeddingSiteService,
+  submitPublicRsvp as submitPublicRsvpService,
+} from "../services/publicWeddingService.js";
 
 const weddingController = {
   async createWedding(req, res, next) {
@@ -199,6 +203,31 @@ const weddingController = {
       });
       res.status(200).json({
         status: "success",
+        data,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async getPublicWeddingSite(req, res, next) {
+    try {
+      const data = await getPublicWeddingSiteService(req.params.slug);
+      res.status(200).json({
+        status: "success",
+        data,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async submitPublicRsvp(req, res, next) {
+    try {
+      const data = await submitPublicRsvpService(req.params.slug, req.body);
+      res.status(201).json({
+        status: "success",
+        message: "Đã xác nhận tham dự (RSVP) thành công!",
         data,
       });
     } catch (err) {

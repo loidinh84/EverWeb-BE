@@ -7,6 +7,8 @@ const router = Router();
 router.get("/public/invitation", weddingController.getPublicInvitation);
 router.get("/public/contact/:slug", weddingController.getPublicContactForm);
 router.post("/public/contact/:slug", weddingController.submitPublicContactForm);
+router.get("/public/site/:slug", weddingController.getPublicWeddingSite);
+router.post("/public/rsvp/:slug", weddingController.submitPublicRsvp);
 
 router.use(authenticate);
 
